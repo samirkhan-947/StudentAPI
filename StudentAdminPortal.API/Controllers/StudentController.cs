@@ -11,10 +11,12 @@ namespace StudentAdminPortal.API.Controllers
     {
         private readonly IStudentRepostory _studentRepostory;
         private readonly IMapper _mapper;
-        public StudentController(IStudentRepostory studentRepostory, IMapper mapper)
+        private readonly IImageRepository _imageRepository;
+        public StudentController(IStudentRepostory studentRepostory, IMapper mapper, IImageRepository imageRepository)
         {
             this._studentRepostory = studentRepostory;
             _mapper = mapper;
+            _imageRepository = imageRepository;
         }
         [HttpGet]
         [Route("[controller]")]
@@ -71,6 +73,44 @@ namespace StudentAdminPortal.API.Controllers
         {
             var student = await _studentRepostory.AddStudent(_mapper.Map<DataModel.Student>(request));
             return CreatedAtAction(nameof(GetStudentAsync), new { studentId = student.Id },_mapper.Map<Student>(student));
+        }
+
+        [HttpPost]
+        [Route("[controller]/{studentId:guid}/upload-image")]
+        public async Task<IActionResult> UploadImage([FromRoute] Guid studentId, IFormFile profileImage)
+        {
+            var validExtensions = new List<string>
+            {
+               ".jpeg",
+               ".png",
+               ".gif",
+               ".jpg"
+            };
+
+            if (profileImage != null && profileImage.Length > 0)
+            {
+                var extension = Path.GetExtension(profileImage.FileName);
+                if (validExtensions.Contains(extension))
+                {
+                    if (await _studentRepostory.Exists(studentId))
+                    {
+                        var fileName = Guid.NewGuid() + Path.GetExtension(profileImage.FileName);
+
+                        var fileImagePath = await _imageRepository.Upload(profileImage, fileName);
+
+                        if (await _studentRepostory.UpdateProfileImage(studentId, fileImagePath))
+                        {
+                            return Ok(fileImagePath);
+                        }
+
+                        return StatusCode(StatusCodes.Status500InternalServerError, "Error uploading image");
+                    }
+                }
+
+                return BadRequest("This is not a valid Image format");
+            }
+
+            return NotFound();
         }
     }
 }

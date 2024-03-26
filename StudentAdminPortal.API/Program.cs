@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using StudentAdminPortal.API.DataModel;
 using StudentAdminPortal.API.Profiles;
 using StudentAdminPortal.API.Repositories;
@@ -16,6 +17,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<StudentAdminContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 //builder.Services.AddDbContext<StudentAdminContext>(options => options.UseMySql(connection,ServerVersion.AutoDetect(connection)));
 builder.Services.AddScoped<IStudentRepostory, SqlStudentRepository>();
+builder.Services.AddScoped<IImageRepository, LocalStorageImageRepository>();
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 builder.Services.AddCors((options) =>
@@ -37,6 +40,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "Resouces")),
+    RequestPath = "/Resouces"
+});
 app.UseRouting();
 app.UseCors("angularAppliaction");
 app.UseAuthorization();
