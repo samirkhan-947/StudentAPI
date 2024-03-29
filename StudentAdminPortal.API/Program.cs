@@ -1,9 +1,11 @@
+using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using StudentAdminPortal.API.DataModel;
 using StudentAdminPortal.API.Profiles;
 using StudentAdminPortal.API.Repositories;
+using StudentAdminPortal.API.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +22,8 @@ builder.Services.AddScoped<IStudentRepostory, SqlStudentRepository>();
 builder.Services.AddScoped<IImageRepository, LocalStorageImageRepository>();
 
 builder.Services.AddAutoMapper(typeof(Program));
+builder.Services.AddFluentValidation(x=>x.RegisterValidatorsFromAssemblyContaining<AddStudentRequestValidator>());
+//builder.Services.AddFluentValidation(x => x.RegisterValidatorsFromAssemblyContaining<UpdateStudentRequestValidator>());
 
 builder.Services.AddCors((options) =>
 {
